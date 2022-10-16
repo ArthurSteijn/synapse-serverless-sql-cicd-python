@@ -1,0 +1,36 @@
+# Azure PowerShell 
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/azure-powershell?view=azure-devops
+# Run a PowerShell script within an Azure environment
+– task: AzurePowerShell@5
+  inputs:
+    azureSubscription: <YourServiceConnection> # Required. Name of Azure Resource Manager service connection
+    scriptType: 'inlineScript' # Optional. Options: filePath, inlineScript
+    #scriptPath: # Optional
+    inline: | # '# You can write your Azure PowerShell scripts inline here. # You can also pass predefined and custom variables to this script using arguments' # Optional
+      #Import needed modules
+      Write-Host("Importing modules")
+      Import-Module SQLServer
+      Import-Module Az.Accounts -MinimumVersion 2.2.0
+
+      #Get an access token with the Service Pricipal used in the Azure DevOps Pipeline
+      Write-Host("Get Access Token")
+      $access_token = (Get-AzAccessToken -ResourceUrl https://database.windows.net).Token
+
+      #Install Python Modules
+      Write-Host("Installing Python Modules")
+      python -m pip install pyodbc
+      python -m pip install pandas
+
+      #Start Python Script
+      Write-Host("Starting python script")
+      & python.exe 'directory/compare-and-deploy-database-changes.py' -synserver $ServerInstance -access_token $access_token -execute_var $execute_var
+      if ( $LASTEXITCODE -eq 1)
+      {
+            Write-Error "Script Execution Failed"
+      }
+    #scriptArguments: # Optional
+    #errorActionPreference: 'stop' # Optional. Options: stop, continue, silentlyContinue
+    #failOnStandardError: false # Optional
+    azurePowerShellVersion: 'latestVersion' # Required. Options: latestVersion, otherVersion
+    #preferredAzurePowerShellVersion: # Required when azurePowerShellVersion == OtherVersion
+    #pwsh: true # Optional. If true, then will use PowerShell Core pwsh.exe
