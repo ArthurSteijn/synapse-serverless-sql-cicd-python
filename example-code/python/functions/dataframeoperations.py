@@ -44,7 +44,7 @@ def create_df_from_repo(repo_path, base_wd, localind = 'False'):
         f.close()
 
     # clean sql statement 
-    df_repo['ViewDefinition'] = df_repo['ViewDefinition'].transform(clean_sql_func_df)
+    df_repo['definition'] = df_repo['definition'].transform(clean_sql_func_df)
 
     df_repo['Env'] = "repo" 
 
@@ -65,23 +65,23 @@ def merge_dataframes(df_repo, df_target):
     # join dataframes 
     df_merged = df_repo.merge(df_target, how='outer', on=['DBName', 'SchemaName', 'ObjectName'])
 
-    df_merged['ViewDefinition_y'] = df_merged['ViewDefinition_y'].str.replace(r'\r', '', regex=True)
-    df_merged['ViewDefinition_x'] = df_merged['ViewDefinition_x'].str.replace(r'\r', '', regex=True)
-    df_merged.loc[df_merged['ViewDefinition_y'].str[-1] == ';', 'ViewDefinition_y' ] = df_merged['ViewDefinition_y'].str[:-1].str.replace(r';$', '', regex=True, flags=re.M)
-    df_merged.loc[df_merged['ViewDefinition_x'].str[-1] == ';', 'ViewDefinition_x' ] = df_merged['ViewDefinition_x'].str[:-1].str.replace(r';$', '', regex=True, flags=re.M)
-    df_merged['compare_sql'] = ( df_merged['ViewDefinition_x'] == df_merged['ViewDefinition_y'] )
+    df_merged['definition_y'] = df_merged['definition_y'].str.replace(r'\r', '', regex=True)
+    df_merged['definition_x'] = df_merged['definition_x'].str.replace(r'\r', '', regex=True)
+    df_merged.loc[df_merged['definition_y'].str[-1] == ';', 'definition_y' ] = df_merged['definition_y'].str[:-1].str.replace(r';$', '', regex=True, flags=re.M)
+    df_merged.loc[df_merged['definition_x'].str[-1] == ';', 'definition_x' ] = df_merged['definition_x'].str[:-1].str.replace(r';$', '', regex=True, flags=re.M)
+    df_merged['compare_sql'] = ( df_merged['definition_x'] == df_merged['definition_y'] )
 
-    df_merged['len_x'] = df_merged['ViewDefinition_x'].str.len()
-    df_merged['len_y'] = df_merged['ViewDefinition_y'].str.len()
+    df_merged['len_x'] = df_merged['definition_x'].str.len()
+    df_merged['len_y'] = df_merged['definition_y'].str.len()
 
     return df_merged
 
 
 def clean_and_prepare(df_merged):
 
-    df_lean = df_merged[['DBName', 'SchemaName', 'ObjectName', 'objectType', 'ViewDefinition_x', 'compare_sql' ]]
+    df_lean = df_merged[['DBName', 'SchemaName', 'ObjectName', 'objectType', 'definition_x', 'compare_sql' ]]
     df_lean = df_lean.query('compare_sql == False')
-    df_lean = df_lean.rename(columns={'ViewDefinition_x':'Execute_Statement'})
+    df_lean = df_lean.rename(columns={'definition_x':'Execute_Statement'})
 
     df_lean.loc[df_lean['Execute_Statement'].notnull(), 'Execute_Statement'] = df_lean['Execute_Statement'] + ';'
     df_lean.loc[df_lean['Execute_Statement'].notnull(), 'Execute_Statement'] = df_lean['Execute_Statement'].str.replace(r"BULK 'replacedforcomparison',$", " BULK 'bronze/dummy/dummyfile.parquet',", regex=True, flags=re.M)

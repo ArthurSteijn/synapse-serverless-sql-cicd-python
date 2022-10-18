@@ -62,8 +62,8 @@ def get_queries():
     sql_views = ( """ 
                     SELECT 
 	                    DB_NAME() AS DBName
-	                    ,s.name
-	                    ,vw.name
+	                    ,s.name AS SchemaName
+	                    ,vw.name AS ObjectName
 	                    ,m.definition
                     FROM sys.views vw
                     LEFT JOIN sys.schemas s
@@ -75,8 +75,8 @@ def get_queries():
     sql_sps = (""" 
                     SELECT 
                          DB_NAME() AS DBName
-	                    ,s.name
-	                    ,p.name
+	                    ,s.name AS SchemaName
+	                    ,p.name AS ObjectName
 	                    ,m.definition
                     FROM sys.procedures p
                     LEFT JOIN sys.schemas s
@@ -88,8 +88,8 @@ def get_queries():
     sql_fn = (""" 
                     SELECT 
                             DB_NAME() AS DBName
-                            ,s.name
-                            ,f.name
+                            ,s.name AS SchemaName
+                            ,f.name AS ObjectName
                             ,m.definition
                     FROM sys.objects f
                     JOIN sys.sql_modules as m 
